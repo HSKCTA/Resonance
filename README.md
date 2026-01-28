@@ -112,19 +112,11 @@ All nodes communicate via a strict **ZeroMQ PUB/SUB** protocol on port `5555`.
 Industrial faults have specific spectral signatures that human ears miss. Resonance targets these harmonics:
 
 | Fault Type | Spectral Signature | Detection Method |
-| --- | --- | --- |
-| **Bearing Wear** | High-frequency harmonics (>5kHz) 
-
- | Autoencoder Reconstruction Error |
-| **Misalignment** | Strong 2×, 3× shaft frequency peaks 
-
- | FFT Peak Detection |
-| **Looseness** | Frequency Sidebands 
-
- | Spectral Analysis |
-| **Imbalance** | Large 1× shaft peak 
-
- | RMS Gate |
+| :--- | :--- | :--- |
+| **Bearing Wear** | High-frequency harmonics (>5kHz) | Autoencoder Reconstruction Error |
+| **Misalignment** | Strong 2×, 3× shaft frequency peaks | FFT Peak Detection |
+| **Looseness** | Frequency Sidebands | Spectral Analysis |
+| **Imbalance** | Large 1× shaft peak | RMS Gate |
 
 **Privacy by Design:** By filtering out the 80Hz–3kHz range (Human Voice) *before* the AI layer, we ensure no worker conversations are ever processed or recorded.
 
