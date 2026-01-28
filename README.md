@@ -13,8 +13,7 @@ Resonance operates on four non-negotiable engineering principles:
 1. **Physics-First:** We do not rely on AI to clean audio. We use hardware filters and DSP to isolate mechanical frequency bands (100Hz - 10kHz) before the neural network sees data.
 
 
-2. 
-**Deterministic Safety:** If vibration RMS exceeds ISO safety thresholds, a hard-coded C++ gate triggers an immediate alarm, bypassing the AI entirely.
+2. **Deterministic Safety:** If vibration RMS exceeds ISO safety thresholds, a hard-coded C++ gate triggers an immediate alarm, bypassing the AI entirely.
 
 
 3. **Read-Only Doctrine:** The system acts as a "Digital Stethoscope." It is advisory only and **never** executes control commands on machinery, ensuring 100% operational safety.
