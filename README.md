@@ -33,8 +33,7 @@ The system follows a distributed **Hub-and-Spoke** architecture connected via a 
 
 * **Role:** Signal Ingestion & DSP Pre-processing.
 * **Tech:** `C++17`, `PortAudio`, `FFTW3`, `ZeroMQ`.
-* **Pipeline:**
-* Ingests raw audio from Piezoelectric Contact Sensors.
+* **Pipeline:** Ingests raw audio from Piezoelectric Contact Sensors.
 
 
 * Applies **High-Pass (100Hz)** and **Low-Pass (10kHz)** filters to remove DC offset, mains hum, and human speech.
@@ -61,8 +60,7 @@ The system follows a distributed **Hub-and-Spoke** architecture connected via a 
 * Calculates **Reconstruction Error (MSE)**. High error = Anomaly.
 
 
-* 
-**VartaLocal Feature:** On fault detection, uses a local SLM (Phi-3/Llama-3) to translate technical errors into local languages (Marathi/Hindi) for workers.
+* On fault detection, uses a local SLM (Phi-3/Llama-3) to translate technical errors into local languages (Marathi/Hindi) for workers.
 
 
 
@@ -72,8 +70,7 @@ The system follows a distributed **Hub-and-Spoke** architecture connected via a 
 
 * **Role:** Situational Awareness & Visualization.
 * **Tech:** `Next.js`, `Node.js`, `Socket.io`, `Docker`.
-* 
-**Features:** Real-time 60FPS Waterfall Spectrogram, RMS history, and Safety Alerts.
+* **Features:** Real-time 60FPS Waterfall Spectrogram, RMS history, and Safety Alerts.
 
 
 
@@ -84,10 +81,7 @@ The system follows a distributed **Hub-and-Spoke** architecture connected via a 
 All nodes communicate via a strict **ZeroMQ PUB/SUB** protocol on port `5555`.
 
 * **Topic:** `audio_data`
-* 
-**Input Shape:** `[1, 1024, 64]` (Channels × Frequency Bins × Time Steps).
-
-
+* **Input Shape:** `[1, 1024, 64]` (Channels × Frequency Bins × Time Steps).
 * **Payload:** Flattened `float32` array representing the spectrogram.
 
 ```cpp
