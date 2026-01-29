@@ -150,8 +150,8 @@ docker-compose up --build
 ## 👥 The Team
 
 * **Hitesh Khare:** Systems Engineering (C++ / DSP Core)
-* **Tanmay:** AI/ML Architect (Model Quantization & GenAI)
-* **Gaurav:** Full Stack & Integration (Dashboard & Docker)
+* **Tanmay Bhole:** AI/ML Architect (Model Quantization & GenAI)
+* **Gaurav Shelke:** Full Stack & Integration (Dashboard & Docker)
 
 ---
 
