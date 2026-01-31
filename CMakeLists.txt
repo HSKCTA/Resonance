@@ -19,9 +19,10 @@ endif()
 # ---------- Dependencies ----------
 find_package(PkgConfig REQUIRED)
 find_package(Protobuf REQUIRED)
+
 pkg_check_modules(PORTAUDIO REQUIRED portaudio-2.0)
 pkg_check_modules(FFTW3 REQUIRED fftw3)
-find_package(ZeroMQ REQUIRED)
+pkg_check_modules(ZMQ REQUIRED libzmq)
 
 # ---------- Protobuf ----------
 file(GLOB PROTO_FILES "${CMAKE_SOURCE_DIR}/schema/*.proto")
@@ -49,8 +50,17 @@ target_link_libraries(fft_engine PRIVATE ${FFTW3_LIBRARIES})
 
 # Broadcaster (ZMQ + Protobuf)
 add_library(broadcaster src/broadcaster.cpp ${PROTO_SRCS})
-target_include_directories(broadcaster PUBLIC include ${CMAKE_CURRENT_BINARY_DIR})
-target_link_libraries(broadcaster PRIVATE zmq ${Protobuf_LIBRARIES})
+target_include_directories(broadcaster
+    PUBLIC
+        include
+        ${CMAKE_CURRENT_BINARY_DIR}
+        ${ZMQ_INCLUDE_DIRS}
+)
+target_link_libraries(broadcaster
+    PRIVATE
+        ${ZMQ_LIBRARIES}
+        ${Protobuf_LIBRARIES}
+)
 
 # ---------- Main Node ----------
 

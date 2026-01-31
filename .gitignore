@@ -1,0 +1,49 @@
+# --- C++ Build Artifacts ---
+build/
+bin/
+lib/
+*.o
+*.a
+*.so
+*.exe
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.d
+
+# --- IDEs & Editors ---
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# --- Python (Tanmay's Module) ---
+__pycache__/
+*.pyc
+.venv/
+env/
+.ipynb_checkpoints/
+*.egg-info/
+# Standard environments
+.env
+.env.local
+
+# --- Web / Node.js (For the web directory) ---
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+dist/
+
+# --- Protobuf Generated Files ---
+# We want the .proto files, NOT the generated .pb.h or .pb.cc
+src/*.pb.cc
+include/resonance/*.pb.h
+
+# --- Logs ---
+logs/
+*.log
