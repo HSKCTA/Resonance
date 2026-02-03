@@ -211,7 +211,7 @@ They appear as **spectral patterns**:
 | Imbalance    | Large 1× shaft peak                |
 | Looseness    | Sidebands and modulation           |
 
-Resonance detects these patterns using **physics + AI**, not guesswork.
+Resonance detects these patterns by combining deterministic spectral analysis with unsupervised anomaly detection.
 
 ---
 
