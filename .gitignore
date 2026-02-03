@@ -47,3 +47,23 @@ include/resonance/*.pb.h
 # --- Logs ---
 logs/
 *.log
+
+
+# Python
+__pycache__/
+*.pyc
+
+# Environments
+venv/
+.env/
+
+# Data / Models
+cwru/
+*.mat
+*.npy
+weights/
+onnx/
+
+# OS
+.DS_Store
+Thumbs.db
