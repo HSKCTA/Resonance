@@ -18,49 +18,32 @@ endif()
 
 # ---------- Dependencies ----------
 find_package(PkgConfig REQUIRED)
-find_package(Protobuf REQUIRED)
-
 pkg_check_modules(PORTAUDIO REQUIRED portaudio-2.0)
 pkg_check_modules(FFTW3 REQUIRED fftw3)
 pkg_check_modules(ZMQ REQUIRED libzmq)
 
-# ---------- Protobuf ----------
-file(GLOB PROTO_FILES "${CMAKE_SOURCE_DIR}/schema/*.proto")
-protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${PROTO_FILES})
-
 # ---------- Subsystem Libraries ----------
 
-# Ear (PortAudio)
 add_library(ear src/ear.cpp)
 target_include_directories(ear PUBLIC include ${PORTAUDIO_INCLUDE_DIRS})
 target_link_libraries(ear PRIVATE ${PORTAUDIO_LIBRARIES})
 
-# Safety Gate (RMS)
 add_library(safety src/safety.cpp)
 target_include_directories(safety PUBLIC include)
 
-# Physics Filters (High-pass + Low-pass)
 add_library(filters src/filters.cpp)
 target_include_directories(filters PUBLIC include)
 
-# FFT Engine
 add_library(fft_engine src/fft.cpp)
 target_include_directories(fft_engine PUBLIC include ${FFTW3_INCLUDE_DIRS})
 target_link_libraries(fft_engine PRIVATE ${FFTW3_LIBRARIES})
 
-# Broadcaster (ZMQ + Protobuf)
-add_library(broadcaster src/broadcaster.cpp ${PROTO_SRCS})
-target_include_directories(broadcaster
-    PUBLIC
-        include
-        ${CMAKE_CURRENT_BINARY_DIR}
-        ${ZMQ_INCLUDE_DIRS}
-)
-target_link_libraries(broadcaster
-    PRIVATE
-        ${ZMQ_LIBRARIES}
-        ${Protobuf_LIBRARIES}
-)
+add_library(spectrogram src/spectrogram.cpp)
+target_include_directories(spectrogram PUBLIC include)
+
+add_library(broadcaster src/broadcaster.cpp)
+target_include_directories(broadcaster PUBLIC include ${ZMQ_INCLUDE_DIRS})
+target_link_libraries(broadcaster PRIVATE ${ZMQ_LIBRARIES})
 
 # ---------- Main Node ----------
 
@@ -72,7 +55,7 @@ target_link_libraries(resonance_node_a
         safety
         filters
         fft_engine
+        spectrogram
         broadcaster
-        ${Protobuf_LIBRARIES}
         pthread
 )
