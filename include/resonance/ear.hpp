@@ -3,14 +3,19 @@
 
 #include <portaudio.h>
 #include <atomic>
-#include<vector>
+#include <vector>
+#include <string>
 
 namespace resonance{
 
 
 class Ear{
     public:
-    Ear(int sampleRate=44100,size_t bufferSize=8192);
+    // deviceHint: optional substring to match against PortAudio device names.
+    //   e.g. "Logitech", "USB Audio", "G430"  → selects first matching input device.
+    //   If empty or no match, falls back to the system default input device.
+    Ear(int sampleRate=44100, size_t bufferSize=8192,
+        const std::string& deviceHint="");
     ~Ear();
 
     Ear(const Ear&)=delete;
@@ -25,8 +30,13 @@ class Ear{
         static int paCallback(const void* inputBuffer, void* outputBuffer, unsigned long framesPerBuffer, const PaStreamCallbackTimeInfo* timeInfo,PaStreamCallbackFlags statusFlags,void* userData);
         bool pushSample(float sample);
 
+        // Finds a PortAudio device whose name contains deviceHint (case-sensitive).
+        // Returns paNoDevice if no match found.
+        PaDeviceIndex findDevice() const;
+
         PaStream* stream=nullptr;
         int sampleRate;
+        std::string deviceHint;
 
         const size_t ringBufferSize;
         std::vector<float> buffer;

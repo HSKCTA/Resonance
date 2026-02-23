@@ -13,7 +13,7 @@
 int main() {
     constexpr float SAMPLE_RATE = 44100.0f;
 
-    resonance::Ear ear(44100, 8192);
+    resonance::Ear ear(44100, 8192, "Logitech");
     resonance::IsolationFilter filter(SAMPLE_RATE);
     resonance::SafetyGate safety(0.7f, 4096);
     resonance::FFTEngine fft(2048, 512);
@@ -44,8 +44,20 @@ int main() {
         // ---------- Deterministic Safety ----------
         safety.push(filtered);
 
+        // ---------- Throttled RMS display (always runs) ----------
+        if (++sampleCounter >= 4410) {
+            float rms = safety.lastRMS();
+            const char* status = safety.isTripped() ? "TRIPPED" : "NORMAL";
+            std::cout << "\rRMS: "
+                      << std::fixed << std::setprecision(5)
+                      << rms
+                      << "  STATUS: " << status
+                      << "        " // overwrite leftover chars
+                      << std::flush;
+            sampleCounter = 0;
+        }
+
         if (safety.isTripped()) {
-            std::cout << "\n[SAFETY] RMS threshold exceeded — AI bypassed\n";
             continue; // do not feed FFT or AI
         }
 
@@ -69,19 +81,9 @@ int main() {
                 spectrogram.data(),
                 spectrogram.getBins(),
                 spectrogram.getFrames(),
-                ts
+                ts,
+                safety.lastRMS()
             );
-        }
-
-        // ---------- Throttled RMS display ----------
-        if (++sampleCounter >= 4410) {
-            float rms = safety.lastRMS();
-            std::cout << "\rRMS: "
-                      << std::fixed << std::setprecision(5)
-                      << rms
-                      << "  STATUS: NORMAL"
-                      << std::flush;
-            sampleCounter = 0;
         }
     }
 

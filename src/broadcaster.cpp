@@ -7,8 +7,8 @@ namespace resonance {
 Broadcaster::Broadcaster(const std::string& endpoint)
     : context(1), publisher(context, zmq::socket_type::pub)
 {
-    int hwm = 5;
-    publisher.setsockopt(ZMQ_SNDHWM, &hwm, sizeof(hwm));
+   
+    publisher.set(zmq::sockopt::sndhwm, 10);
     publisher.bind(endpoint);
 }
 
@@ -16,12 +16,13 @@ Broadcaster::~Broadcaster() {
     publisher.close();
 }
 
-void Broadcaster::send(const float* data, size_t bins, size_t frames, uint64_t ts)
+void Broadcaster::send(const float* data, size_t bins, size_t frames, uint64_t ts, float rms)
 {
     // ---------- Frame 0: JSON header ----------
     std::ostringstream json;
     json << "{"
          << "\"timestamp_ms\":" << ts << ","
+         << "\"rms\":" << rms << ","
          << "\"bins\":" << bins << ","
          << "\"frames\":" << frames << ","
          << "\"dtype\":\"float32\""

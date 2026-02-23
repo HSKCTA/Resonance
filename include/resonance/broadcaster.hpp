@@ -16,7 +16,8 @@ public:
         const float* spectrogram,   // pointer to 1024×64 floats
         size_t bins,                // 1024
         size_t frames,              // 64
-        uint64_t timestamp_ms
+        uint64_t timestamp_ms,
+        float rms                   // real audio RMS from SafetyGate
     );
 
 private:

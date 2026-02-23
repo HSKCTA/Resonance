@@ -1,11 +1,13 @@
 #include "resonance/ear.hpp"
 #include <iostream>
+#include <cstring>
 
 namespace resonance {
 
-Ear::Ear(int sr, size_t bufferSize)
+Ear::Ear(int sr, size_t bufferSize, const std::string& hint)
     : stream(nullptr),
       sampleRate(sr),
+      deviceHint(hint),
       ringBufferSize(bufferSize),
       buffer(bufferSize)
 {
@@ -61,19 +63,71 @@ int Ear::paCallback(
     return paContinue;
 }
 
+PaDeviceIndex Ear::findDevice() const {
+    if (deviceHint.empty())
+        return paNoDevice;
+
+    int numDevices = Pa_GetDeviceCount();
+    for (int i = 0; i < numDevices; ++i) {
+        const PaDeviceInfo* info = Pa_GetDeviceInfo(i);
+        if (info && info->maxInputChannels > 0 &&
+            std::strstr(info->name, deviceHint.c_str()) != nullptr) {
+            std::cout << "[Ear] Matched device " << i
+                      << ": \"" << info->name << "\"\n";
+            return static_cast<PaDeviceIndex>(i);
+        }
+    }
+
+    std::cerr << "[Ear] No device matching \"" << deviceHint
+              << "\" — falling back to default\n";
+    std::cerr << "[Ear] Available input devices:\n";
+    int numDev = Pa_GetDeviceCount();
+    for (int i = 0; i < numDev; ++i) {
+        const PaDeviceInfo* info = Pa_GetDeviceInfo(i);
+        if (info && info->maxInputChannels > 0)
+            std::cerr << "       [" << i << "] " << info->name << "\n";
+    }
+    return paNoDevice;
+}
+
 bool Ear::start() {
-    PaError err = Pa_OpenDefaultStream(
+    PaDeviceIndex deviceIdx = findDevice();
+
+    PaStreamParameters inputParams;
+    if (deviceIdx != paNoDevice) {
+        inputParams.device = deviceIdx;
+    } else {
+        inputParams.device = Pa_GetDefaultInputDevice();
+    }
+
+    if (inputParams.device == paNoDevice) {
+        std::cerr << "PortAudio: no input device available\n";
+        return false;
+    }
+
+    const PaDeviceInfo* devInfo = Pa_GetDeviceInfo(inputParams.device);
+    inputParams.channelCount     = 1;
+    inputParams.sampleFormat     = paFloat32;
+    inputParams.suggestedLatency = devInfo->defaultLowInputLatency;
+    inputParams.hostApiSpecificStreamInfo = nullptr;
+
+    std::cout << "[Ear] Opening device " << inputParams.device
+              << ": \"" << devInfo->name << "\"  @ "
+              << sampleRate << " Hz\n";
+
+    PaError err = Pa_OpenStream(
         &stream,
-        1, 0,
-        paFloat32,
+        &inputParams,
+        nullptr,        // no output
         sampleRate,
         256,
+        paClipOff,
         paCallback,
         this
     );
 
     if (err != paNoError) {
-        std::cerr << "PortAudio open failed\n";
+        std::cerr << "PortAudio open failed: " << Pa_GetErrorText(err) << "\n";
         return false;
     }
 
