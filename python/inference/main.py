@@ -1,67 +1,131 @@
-from inference.zmq_listener import ZMQSpectrogramListener
-from inference.ae_inference import AutoencoderInference
-from inference.anomaly_score import AnomalyScorer
-from llm.translator import WorkerAlertGenerator
+import sys
+import os
+import time
+import logging
+import numpy as np
+import zmq
+import json
+import base64
+import onnxruntime as ort
 
+# Add parent dir to path to allow imports
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-def main():
-    # -------------------------
-    # Initialize components
-    # -------------------------
-    zmq_listener = ZMQSpectrogramListener(
-        endpoint="tcp://localhost:5555"
-    )
+from utils.zmq_receiver import ZMQSubscriber
+from llm.handler import LLMHandler
+from utils import config
 
-    ae_engine = AutoencoderInference(
-        onnx_model_path="onnx/autoencoder.onnx"
-    )
+# Configure logging
+logging.basicConfig(
+    level=getattr(logging, config.LOG_LEVEL),
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger("NodeB")
 
-    scorer = AnomalyScorer()
+class ZMQPublisher:
+    def __init__(self, endpoint="tcp://*:5556"):
+        self.context = zmq.Context()
+        self.socket = self.context.socket(zmq.PUB)
+        self.socket.bind(endpoint)
+        logger.info(f"Node B Results Publisher bound to {endpoint}")
 
-    # Local LLM (change language if needed: "mr", "hi", "en")
-    alert_generator = WorkerAlertGenerator(
-        model="phi3",
-        language="mr"
-    )
+    def publish(self, data):
+        try:
+            self.socket.send_json(data)
+        except Exception as e:
+            logger.error(f"Failed to publish results: {e}")
 
-    print("[NODE B] Resonance AI Inference Started")
+class InferenceNode:
+    def __init__(self):
+        self.receiver = ZMQSubscriber(config.ZMQ_ENDPOINT)
+        self.publisher = ZMQPublisher(endpoint="tcp://*:5557")
+        
+        # Load ONNX Model
+        try:
+            if not os.path.exists(config.MODEL_PATH_ONNX):
+                logger.error(f"ONNX model not found at {config.MODEL_PATH_ONNX}")
+            else:
+                logger.info(f"Loading model from {config.MODEL_PATH_ONNX}")
+                self.ort_session = ort.InferenceSession(config.MODEL_PATH_ONNX)
+        except Exception as e:
+            logger.error(f"Error loading model: {e}")
+            self.ort_session = None
 
-    # -------------------------
-    # Main loop
-    # -------------------------
-    while True:
-        spec, metadata = zmq_listener.receive()
+        # LLM Handler
+        self.llm = LLMHandler(url=config.OLLAMA_URL, model=config.OLLAMA_MODEL)
+        self.llm_available = self.llm.check_connection()
+        
+    def preprocess(self, tensor_data):
+        try:
+            data = tensor_data.reshape(1, 1024, 64)
+            data = np.expand_dims(data, axis=0)
+            return data
+        except Exception as e:
+            logger.error(f"Preprocessing error: {e}")
+            return None
 
-        # Autoencoder reconstruction
-        recon = ae_engine.reconstruct(spec)
+    def run(self):
+        logger.info("Starting Inference Node...")
+        if self.ort_session is None:
+             logger.warning("No model loaded. Running in pass-through mode (no inference).")
 
-        # Anomaly logic
-        score = scorer.reconstruction_error(spec, recon)
-        is_anomaly = scorer.is_anomaly(score)
-        severity = scorer.severity(score)
+        try:
+            while True:
+                # Receive data from Node A
+                metadata, raw_data = self.receiver.receive()
+                
+                if raw_data is None:
+                    time.sleep(0.01)
+                    continue
+                
+                mse = 0.0
+                severity = "NORMAL"
+                spectrogram_b64 = ""
 
-        print(
-            f"[NODE B] Score: {score:.6f} | "
-            f"Severity: {severity} | "
-            f"Anomaly: {is_anomaly} | "
-            f"Meta: {metadata}"
-        )
+                # Preprocess & Inference
+                if self.ort_session:
+                    input_tensor = self.preprocess(raw_data)
+                    if input_tensor is not None:
+                        ort_inputs = {self.ort_session.get_inputs()[0].name: input_tensor}
+                        ort_outs = self.ort_session.run(None, ort_inputs)
+                        reconstruction = ort_outs[0]
+                        mse = float(np.mean((input_tensor - reconstruction) ** 2))
+                
+                # Check Thresholds
+                if mse > config.THRESHOLD_HIGH:
+                    severity = "HIGH"
+                elif mse > config.THRESHOLD_MEDIUM:
+                    severity = "MEDIUM"
+                elif mse > config.THRESHOLD_LOW:
+                    severity = "LOW"
+                
+                # Encode spectrogram for visualization
+                # Using 1024x64 float32 is heavy, but we'll send it for the modern dashboard
+                spectrogram_b64 = base64.b64encode(raw_data.tobytes()).decode('utf-8')
 
-        # -------------------------
-        # LLM alert (ONLY on anomaly)
-        # -------------------------
-        if is_anomaly:
-            fault = "असामान्य कंपन"  # can be improved later
+                # Handle Anomaly & Alerts
+                alert_text = None
+                if severity != "NORMAL":
+                     logger.info(f"Anomaly Detected! MSE: {mse:.4f} | Severity: {severity}")
+                     if self.llm_available and severity in ["HIGH", "MEDIUM"]:
+                         # Rate limit or logic here
+                         alert_text = f"Warning: {severity} severity anomaly detected. Check machine components."
 
-            try:
-                alert_msg = alert_generator.generate_alert(
-                    fault=fault,
-                    severity=severity
-                )
-                print("[ALERT]", alert_msg)
-            except Exception as e:
-                print("[LLM ERROR]", e)
-
+                # Publish Results to Dashboard (Node.js)
+                result_payload = {
+                    "timestamp": time.time(),
+                    "mse": mse,
+                    "severity": severity,
+                    "alert": alert_text,
+                    "spectrogram": spectrogram_b64
+                }
+                self.publisher.publish(result_payload)
+                
+        except KeyboardInterrupt:
+            logger.info("Stopping Node B...")
+        finally:
+            self.receiver.close()
 
 if __name__ == "__main__":
-    main()
+    node = InferenceNode()
+    node.run()
