@@ -152,5 +152,3 @@ docker-compose up --build
 * **Hitesh Khare:** Systems Engineering (C++ / DSP Core)
 * **Tanmay Bhole:** AI/ML Architect (Model Quantization & GenAI)
 ---
-
-*Built for the AMD Slingshot Hackathon 2026.*
