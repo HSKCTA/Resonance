@@ -6,33 +6,35 @@ lib/
 *.a
 *.so
 *.exe
-# CMake generated files
+*.d
+
+# --- CMake ---
 CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
 Makefile
-*.d
 
 # --- IDEs & Editors ---
 .vscode/
 .idea/
 *.swp
 *.swo
-.DS_Store
-Thumbs.db
 
-# --- Python (Tanmay's Module) ---
+# --- Python (Tanmay's Module & General) ---
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.Python
 .venv/
 env/
+venv/
 .ipynb_checkpoints/
 *.egg-info/
-# Standard environments
 .env
 .env.local
 
-# --- Web / Node.js (For the web directory) ---
+# --- Web / Node.js ---
 node_modules/
 npm-debug.log
 yarn-debug.log
@@ -40,30 +42,23 @@ yarn-error.log
 dist/
 
 # --- Protobuf Generated Files ---
-# We want the .proto files, NOT the generated .pb.h or .pb.cc
 src/*.pb.cc
 include/resonance/*.pb.h
+
+# --- Data / Models ---
+cwru/
+python/data/
+*.mat
+*.npy
+*.zip
+weights/
+onnx/
 
 # --- Logs ---
 logs/
 *.log
+export_log.txt
 
-
-# Python
-__pycache__/
-*.pyc
-
-# Environments
-venv/
-.env/
-
-# Data / Models
-cwru/
-*.mat
-*.npy
-weights/
-onnx/
-
-# OS
+# --- OS ---
 .DS_Store
 Thumbs.db
