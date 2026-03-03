@@ -44,8 +44,8 @@ class LocalLLM(LLMProvider):
     """Talks to any local server that exposes /v1/chat/completions."""
 
     DEFAULT_URL = "http://localhost:11434/v1/chat/completions"
-    # Groq testing used llama-3.1-8b-instant → Ollama equivalent is llama3.1:8b
-    DEFAULT_MODEL = "llama3.1:8b"
+    # Local deployment via Ollama — default model: Mistral 7B
+    DEFAULT_MODEL = "mistral:7b"
 
     def __init__(self, url: str | None = None, model: str | None = None):
         self.url = url or os.environ.get("LLM_URL", self.DEFAULT_URL)
@@ -168,7 +168,7 @@ class LLMHandler:
                 "role": "system",
                 "content": (
                     "You are an industrial AI assistant monitoring a 12V DC motor "
-                    "via a vibration sensor (Logitech G430 headset used as accelerometer). "
+                    "via a vibration sensor (USB Audio Adapter, C-Media CM108 compatible, used as accelerometer). "
                     "The autoencoder compares current vibration to baseline healthy vibration. "
                     "Based on the diagnosis below, write ONE short sentence (under 25 words) "
                     "telling the factory worker what specific physical check to do on the MOTOR. "
@@ -291,5 +291,5 @@ if __name__ == "__main__":
         llm = handler.provider
         print(f"LLM not reachable at {llm.url}")
         print("Start your local server, e.g.:")
-        print("  ollama serve          # then: ollama pull llama3.1:8b")
+        print("  ollama serve          # then: ollama pull mistral:7b")
         print("  # or set LLM_URL / LLM_MODEL env vars")

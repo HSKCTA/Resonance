@@ -17,7 +17,7 @@ services:
     environment:
       - ZMQ_ENDPOINT=tcp://host.docker.internal:5555
       - LLM_URL=http://ollama:11434/v1/chat/completions
-      - LLM_MODEL=llama3.1:8b
+      - LLM_MODEL=mistral:7b
     ports:
       - "5557:5557"
     depends_on:

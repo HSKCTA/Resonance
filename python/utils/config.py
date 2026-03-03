@@ -18,7 +18,7 @@ THRESHOLD_HIGH = float(os.environ.get("THRESHOLD_HIGH", 0.01))
 
 # LLM Settings (handler.py reads these env vars directly)
 LLM_URL = os.environ.get("LLM_URL", "http://localhost:11434/v1/chat/completions")
-LLM_MODEL = os.environ.get("LLM_MODEL", "llama3.1:8b")
+LLM_MODEL = os.environ.get("LLM_MODEL", "mistral:7b")
 
 # System
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")

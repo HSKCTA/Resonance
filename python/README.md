@@ -7,7 +7,7 @@ AI-powered vibration anomaly detection with multilingual fault alerts.
 ```
 Node A (C++)                    Node B (Python)                Dashboard
 ┌──────────────┐   ZMQ 5555   ┌──────────────────┐  ZMQ 5557  ┌──────────┐
-│ G430 Sensor  │──────────────│ ONNX Autoencoder │────────────│ Vite App │
+│ CM108 Sensor │──────────────│ ONNX Autoencoder │────────────│ Vite App │
 │ 44.1kHz ADC  │  1024×64     │ + LLM Alerts     │  JSON      │ :5173    │
 │ FFT + Window │  float32     │ + TTS (gTTS)     │            │          │
 └──────────────┘              └──────────────────┘            └──────────┘
@@ -64,7 +64,7 @@ ollama pull llama3
 
 # Or override endpoint
 export LLM_URL="http://localhost:11434/v1/chat/completions"
-export LLM_MODEL="llama3"
+export LLM_MODEL="mistral:7b"
 
 python run_inference.py
 ```
@@ -108,6 +108,8 @@ Edit `utils/config.py`:
 | MEDIUM | > 0.005 |
 | HIGH | > 0.01 |
 
+> **Threshold:** 0.180 (calibrated on healthy baseline data)
+
 ## Evaluate Model
 
 ```bash
@@ -142,5 +144,5 @@ python run_inference.py       # In another terminal
 
 > **Note:** Local LLM requires model pull (not required for core anomaly detection):
 > ```bash
-> docker exec -it resonance_ollama ollama pull llama3.1:8b
+> docker exec -it resonance_ollama ollama pull mistral:7b
 > ```
