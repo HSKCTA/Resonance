@@ -15,7 +15,7 @@ mkdir -p "$LOG_DIR"
 
 # Local LLM endpoint (OpenAI-compatible: Ollama, llama.cpp, vLLM, LM Studio)
 export LLM_URL="${LLM_URL:-http://localhost:11434/v1/chat/completions}"
-export LLM_MODEL="${LLM_MODEL:-mistral:7b}"
+export LLM_MODEL="${LLM_MODEL:-llama-3.1-8b}"
 # export LLM_API_KEY=""  # uncomment if your server needs auth
 
 # ZMQ — override for local dev (config.py defaults to host.docker.internal for Docker)

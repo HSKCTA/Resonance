@@ -64,7 +64,7 @@ ollama pull llama3
 
 # Or override endpoint
 export LLM_URL="http://localhost:11434/v1/chat/completions"
-export LLM_MODEL="mistral:7b"
+export LLM_MODEL="llama-3.1-8b"
 
 python run_inference.py
 ```
@@ -144,5 +144,5 @@ python run_inference.py       # In another terminal
 
 > **Note:** Local LLM requires model pull (not required for core anomaly detection):
 > ```bash
-> docker exec -it resonance_ollama ollama pull mistral:7b
+> docker exec -it resonance_ollama ollama pull llama-3.1-8b
 > ```

@@ -27,7 +27,7 @@ Docker Network
 │     Subscribes: ZMQ :5557
 │     Serves:     http://localhost:3001
 │
-└── LLM (Mistral 7B — Optional)
+└── LLM (Llama 3.1 8B — Optional)
       Serves: :11434 via Ollama (local only, no cloud API)
 ```
 
@@ -200,10 +200,10 @@ http://localhost:3001
 
 ### LLM Alerts (Optional)
 
-Pull Mistral 7B for local multilingual fault explanations:
+Pull Llama 3.1 8B for local multilingual fault explanations:
 
 ```bash
-docker exec -it resonance_ollama ollama pull mistral:7b
+docker exec -it resonance_ollama ollama pull llama-3.1-8b
 ```
 
 If not pulled, system runs with fallback rule-based alert text.
@@ -241,7 +241,7 @@ ConvAutoencoder (ONNX Runtime · CPU / AMD Ryzen AI NPU)
 MSE Reconstruction Error
      │
      ├── MSE > 0.180 → ANOMALY DETECTED
-     │         └── Mistral 7B LLM → alert in Hindi / Marathi / English
+     │         └── Llama 3.1 8B LLM → alert in Hindi / Marathi / English
      │
      └── MSE ≤ 0.180 → NORMAL
 ```
