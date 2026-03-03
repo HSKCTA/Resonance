@@ -61,8 +61,11 @@ python/weights/*.pt
 *.mat
 *.npy
 *.zip
-weights/
-onnx/
+# Keep deployed model files, ignore everything else in weights/onnx
+!python/onnx/autoencoder.onnx
+!python/onnx/model_hash.txt
+!python/weights/autoencoder.pth
+!python/weights/norm_stats.json
 
 # --- Logs ---
 logs/
