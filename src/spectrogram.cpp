@@ -17,6 +17,8 @@ void SpectrogramRing::pushFrame(const std::vector<float>& spectrum) {
     writeFrame = (writeFrame + 1) % frames;
     if (writeFrame == 0)
         full = true;
+    else
+        full = false;
 }
 
 bool SpectrogramRing::isReady() const {

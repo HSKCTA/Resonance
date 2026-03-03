@@ -1,83 +1,146 @@
-# Resonance Node B
+# Resonance — Tier 2: Inference Node
 
-AI Inference & Worker Communication Module for Resonance Industrial Monitoring System.
+AI-powered vibration anomaly detection with multilingual fault alerts.
 
-## Overview
-Node B receives processed spectrograms from Node A (C++), performs anomaly detection using a Convolutional Autoencoder, and generates worker-friendly alerts via a local LLM (Ollama).
+## Architecture
+
+```
+Node A (C++)                    Node B (Python)                Dashboard
+┌──────────────┐   ZMQ 5555   ┌──────────────────┐  ZMQ 5557  ┌──────────┐
+│ G430 Sensor  │──────────────│ ONNX Autoencoder │────────────│ Vite App │
+│ 44.1kHz ADC  │  1024×64     │ + LLM Alerts     │  JSON      │ :5173    │
+│ FFT + Window │  float32     │ + TTS (gTTS)     │            │          │
+└──────────────┘              └──────────────────┘            └──────────┘
+```
 
 ## Structure
-- `python/inference/`: Main runtime loop and inference logic.
-- `python/training/`: Model definition and training scripts.
-- `python/llm/`: Interface for local LLM communication.
-- `python/utils/`: Configuration and helper utilities (ZMQ).
-- `python/weights/`: PyTorch model checkpoints.
-- `python/onnx/`: Exported ONNX models for deployment.
-- `python/data/`: CWRU bearing dataset (for training).
 
-## Prerequisites
-1. **Python 3.8+**: Ensure Python is installed.
-2. **Ollama**: Must be running locally (default: `http://localhost:11434`) with a language model:
-   ```bash
-   ollama run llama3
-   ```
-3. **Node A (Signal Engine)**: The C++ signal processing node must be running and publishing to `tcp://localhost:5555`.
-
-## Quick Start for Deployment
-
-1. **Install Dependencies**:
-   ```bash
-   pip install -r python/requirements.txt
-   ```
-
-2. **Verify ONNX Model**:
-   Ensure `python/onnx/autoencoder.onnx` exists. If not, see Training section below.
-
-3. **Run Node B**:
-   This starts the ZeroMQ subscriber and AI inference engine.
-   ```bash
-   python python/inference/main.py
-   ```
-   Node B will now wait for incoming spectrograms from Node A.
-
-## Training (Offline Only)
-If you need to retrain the model:
-1. Place CWRU `.mat` files in `python/data/cwru/`.
-2. Run training script:
-   ```bash
-   python python/training/train.py
-   ```
-3. Export new ONNX model:
-   ```bash
-   python python/training/export_onnx.py
-   ```
-
-## Configuration
-Edit `python/utils/config.py` to adjust:
-- `ZMQ_ENDPOINT`: Address of Node A.
-- `THRESHOLD_*`: Anomaly detection sensitivity.
-- `OLLAMA_MODEL`: LLM model name (e.g., `llama3`, `phi3`).
-
-## Testing with Simulator
-If Node A is not available, run the mock simulator:
-```bash
-python python/tests/mock_node_a.py
 ```
-Then run Node B in a separate terminal.
-
-## Docker Deployment
-
-### Build
-```bash
-docker build -t resonance-node-b .
+python/
+├── inference/
+│   └── main.py              # Node B runtime loop
+├── llm/
+│   └── handler.py           # LLMProvider → LocalLLM → LLMHandler
+├── training/                # Model definition + training scripts
+├── utils/
+│   ├── config.py            # Thresholds, ZMQ endpoints
+│   ├── zmq_receiver.py      # ZMQ subscriber
+│   └── rms_monitor.py       # Standalone RMS visualizer
+├── tests/
+│   ├── mock_node_a.py       # Simulate Node A without hardware
+│   └── evaluate_model.py    # Model metrics (MSE, confusion matrix)
+├── onnx/
+│   ├── autoencoder.onnx     # Exported ONNX model
+│   └── model_hash.txt       # SHA-256 integrity hash
+├── weights/
+│   ├── autoencoder.pth      # PyTorch checkpoint
+│   └── norm_stats.json      # Min/max normalization stats
+├── run_inference.py         # ← Entry point
+├── requirements.txt
+└── README.md
 ```
 
-### Run
-Requires Node A and Ollama running on the host machine.
+## Requirements
+
 ```bash
-docker run -it --rm \
-  --add-host=host.docker.internal:host-gateway \
-  -e ZMQ_ENDPOINT="tcp://host.docker.internal:5555" \
-  -e OLLAMA_URL="http://host.docker.internal:11434/api/generate" \
-  resonance-node-b
+pip install -r requirements.txt
 ```
-Note: `--add-host` is essential for the container to access services running on `localhost` of the host machine.
+
+## Run
+
+```bash
+# Start inference (Node A must be running on tcp://localhost:5555)
+python run_inference.py
+```
+
+### With LLM alerts (optional)
+
+Start a local LLM server, then run:
+
+```bash
+# Ollama example
+ollama serve &
+ollama pull llama3
+
+# Or override endpoint
+export LLM_URL="http://localhost:11434/v1/chat/completions"
+export LLM_MODEL="llama3"
+
+python run_inference.py
+```
+
+## Expected Input
+
+**ZMQ multipart message** on `tcp://localhost:5555`:
+
+| Frame | Content |
+|-------|---------|
+| 0 | JSON metadata: `{"rms": 0.303, ...}` |
+| 1 | Raw bytes: `1024 × 64` float32 spectrogram tensor |
+
+## Output
+
+**ZMQ JSON** published on `tcp://*:5557`:
+
+```json
+{
+  "timestamp": 1709312345.678,
+  "mse": 0.0182,
+  "rms": 0.303,
+  "severity": "HIGH",
+  "alert": "Check motor bearings for wear — shaft imbalance detected."
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `mse` | float | Reconstruction error (healthy ≈ 0.0009) |
+| `severity` | string | `NORMAL` / `LOW` / `MEDIUM` / `HIGH` |
+| `alert` | string \| null | LLM-generated fault diagnosis (when severity ≥ MEDIUM) |
+
+## Thresholds
+
+Edit `utils/config.py`:
+
+| Level | MSE Threshold |
+|-------|--------------|
+| LOW | > 0.002 |
+| MEDIUM | > 0.005 |
+| HIGH | > 0.01 |
+
+## Evaluate Model
+
+```bash
+python tests/evaluate_model.py
+```
+
+Outputs healthy/fault mean MSE, threshold, and confusion matrix.
+
+## Testing Without Hardware
+
+```bash
+python tests/mock_node_a.py   # Simulates Node A
+python run_inference.py       # In another terminal
+```
+
+## Run with Docker (LLM optional)
+
+1. Start Node A on host:
+   ```bash
+   ./build/resonance_node_a
+   ```
+
+2. Start containers:
+   ```bash
+   docker compose up --build
+   ```
+
+3. Open dashboard:
+   ```
+   http://localhost:3001
+   ```
+
+> **Note:** Local LLM requires model pull (not required for core anomaly detection):
+> ```bash
+> docker exec -it resonance_ollama ollama pull llama3.1:8b
+> ```

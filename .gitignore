@@ -48,6 +48,16 @@ include/resonance/*.pb.h
 # --- Data / Models ---
 cwru/
 python/data/
+
+# Large model artifacts (keep .onnx protobuf + .pth checkpoint, ignore bulk data)
+*.onnx.data
+*.bin
+*.safetensors
+*.gguf
+*.llamafile
+python/weights/*.pt
+!python/weights/autoencoder.pth
+.ollama/
 *.mat
 *.npy
 *.zip
