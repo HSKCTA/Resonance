@@ -368,4 +368,4 @@ MIT License — see LICENSE file.
 **Hitesh Khare** — Systems Engineering · C++ DSP Core
 **Tanmay Bhole** — AI/ML Architecture · Model Training · GenAI
 
-AMD Slingshot 2026 · Team H2S
+AMD Slingshot 2026 · Team DatAnOtFound
