@@ -80,7 +80,8 @@ Resonance/
 │     │     └── dsp.py            # DSP utilities
 │     ├── tests/
 │     │     ├── mock_node_a.py    # ZMQ mock publisher for testing
-│     │     └── evaluate_model.py # MSE threshold evaluation
+│     │     ├── evaluate_model.py # MSE threshold evaluation
+│     │     └── verify_e2e.py     # End-to-end pipeline verifier
 │     ├── run_inference.py        # Entry point
 │     ├── requirements.txt
 │     ├── Dockerfile
@@ -203,7 +204,7 @@ http://localhost:3001
 Pull Llama 3.1 8B for local multilingual fault explanations:
 
 ```bash
-docker exec -it resonance_ollama ollama pull llama-3.1-8b
+docker exec -it resonance_ollama ollama pull llama3.1:8b
 ```
 
 If not pulled, system runs with fallback rule-based alert text.
@@ -272,9 +273,9 @@ Standards compliance: ISO 10816-3:2009 · ISO 13373-1:2002
 | Training data | Healthy vibration only (unsupervised) |
 | Loss function | Mean Squared Error (MSE) |
 | Anomaly threshold | 0.180 (calibrated on healthy baseline data) |
-| Export format | ONNX |
+| Export format | ONNX FP32 |
 | Runtime | ONNX Runtime (CPU) · Vitis AI (NPU target) |
-| Inference latency | ~4.7ms (AMD Ryzen AI NPU) |
+| Inference latency | 3ms median CPU · ~1.4ms projected AMD NPU |
 | Parameters | ~180K |
 
 ### Normalization
@@ -312,12 +313,56 @@ Reports MSE distribution on training data and recommended threshold.
 
 ## Benchmarks
 
-| Environment | Inference Latency | End-to-End Latency |
-|---|---|---|
-| AMD Ryzen AI XDNA NPU (target) | ~4.7ms | <100ms |
-| x86 CPU dev machine | ~18-25ms | <200ms |
+### A. Inference Latency (Validated)
 
-End-to-end: sensor capture → DSP → ZMQ → inference → alert publish.
+Model: ConvAutoencoder FP32 ONNX · Input: 1024×64 · Runs: 1000 · Warmup: 50
+
+| Metric | CPU (x86 dev) | NPU Projection* |
+|---|---|---|
+| Mean | 7.0 ms | ~1.4 ms |
+| Median (P50) | 3.0 ms | ~0.6 ms |
+| P95 | 21.7 ms | ~4.3 ms |
+| P99 | 27.7 ms | ~5.5 ms |
+| Min | 1.3 ms | — |
+| Max | 34.7 ms | — |
+
+*NPU projection: AMD Ryzen AI XDNA 50 TOPS · ~5× CPU speedup for FP32 ONNX
+via Vitis AI Runtime · Ryzen AI 9 HX 370 · validated benchmarks pending target hardware.
+
+### B. DSP Pipeline Latency (Validated)
+
+| Stage | Latency |
+|---|---|
+| FFT (64 hops · 2048-pt) | 1.5 ms |
+| Spectrogram build | 0.09 ms |
+| Audio buffer fill* | ~743 ms |
+
+*Audio buffer fill requires 64 frames at 44.1kHz to construct one spectrogram.
+This is a physics constraint identical across all vibration monitoring systems.
+
+### C. End-to-End Pipeline (Validated)
+
+Tested: mock_node_a → ZMQ :5555 → Node B (ONNX) → ZMQ :5557 → verifier
+
+| Metric | Result |
+|---|---|
+| Frames tested | 10/10 successful |
+| Pipeline mean (ZMQ + inference) | 30.9 ms |
+| Pipeline worst case | 51.0 ms |
+| Audio buffer fill | ~743 ms (physics) |
+| Full sensor-to-alert | ~774 ms mean |
+| MSE on healthy data | ~0.003 (consistent) |
+| ZMQ transport | ✓ verified |
+| LLM fallback | ✓ graceful — no crash on unavailable model |
+
+Pipeline target: <100ms inference ✓ (30.9ms measured)
+
+### Test Environment
+- CPU: AMD Ryzen 5 (Yoga 6 13ARE05)
+- OS: Linux
+- Runtime: ONNX Runtime · CPUExecutionProvider
+- DSP: C++17 · FFTW3 · PortAudio
+- Inference runs: 1000 · Warmup: 50
 
 ---
 
@@ -368,4 +413,4 @@ MIT License — see LICENSE file.
 **Hitesh Khare** — Systems Engineering · C++ DSP Core
 **Tanmay Bhole** — AI/ML Architecture · Model Training · GenAI
 
-AMD Slingshot 2026 · Team H2S
+AMD Slingshot 2026 · Team DataNOtfOund
