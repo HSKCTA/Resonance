@@ -399,13 +399,6 @@ Resonance: 85% cheaper. Zero cloud cost.
 | Q2 2026 | 3 months | Fault type classifier — bearing vs imbalance vs looseness |
 | Q3 2026 | 6 months | Remaining useful life estimator — LSTM on MSE trend |
 | Q4 2026 | 12 months | Multi-factory dashboard · SCADA integration · AMD EPYC |
-
----
-
-## License
-
-MIT License — see LICENSE file.
-
 ---
 
 ## Team
