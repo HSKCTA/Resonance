@@ -1,0 +1,88 @@
+# ============================================================
+#  Resonance — Complete Dependency List
+#  Offline vibration intelligence for industrial machinery
+# ============================================================
+#
+#  This file documents ALL project dependencies across the
+#  three nodes: Node A (C++ DSP), Node B (Python Inference),
+#  and Node C (Web Dashboard).
+#
+#  Install system packages first, then Python and Node deps.
+# ============================================================
+
+
+# ────────────────────────────────────────────────────────────
+#  SYSTEM DEPENDENCIES (apt / dnf / pacman)
+#  Install these before building Node A (C++ DSP Engine)
+# ────────────────────────────────────────────────────────────
+
+# Build tools
+# sudo apt install cmake build-essential pkg-config
+
+# DSP libraries
+# sudo apt install libfftw3-dev libportaudio2 portaudio19-dev libzmq3-dev
+
+#  cmake           >= 3.16      Build system for Node A
+#  build-essential               GCC/G++ C++17 compiler toolchain
+#  pkg-config                    Library discovery for CMake
+#  libfftw3-dev    >= 3.3        Fast Fourier Transform (2048-pt FFT)
+#  portaudio19-dev >= 19.0       Audio I/O (44.1kHz USB capture)
+#  libzmq3-dev     >= 4.3        ZeroMQ messaging (inter-node transport)
+
+
+# ────────────────────────────────────────────────────────────
+#  PYTHON DEPENDENCIES (pip)
+#  Node B — Inference Engine
+#  Install: pip install -r requirements.txt
+# ────────────────────────────────────────────────────────────
+
+# Core inference
+numpy>=1.24.0
+onnxruntime>=1.15.0
+torch>=2.0.0
+
+# Messaging
+pyzmq>=25.1.0
+
+# HTTP / LLM communication
+requests>=2.31.0
+
+# Alert audio playback
+gTTS>=2.4.0
+pygame>=2.5.0
+
+# Testing
+pytest>=7.4.0
+
+# Data collection & visualization (optional)
+matplotlib>=3.7.0
+scipy>=1.11.0
+
+
+# ────────────────────────────────────────────────────────────
+#  NODE.JS DEPENDENCIES (npm)
+#  Node C — React Dashboard
+#  Install: cd web && npm install
+# ────────────────────────────────────────────────────────────
+
+#  react           ^19.0.0      UI framework
+#  react-dom       ^19.0.0      React DOM renderer
+#  recharts        ^2.15.0      Charting library
+#  motion          ^12.0.0      Animations (Framer Motion)
+#  lucide-react    ^0.474.0     Icon set
+#  express         ^4.21.0      HTTP server
+#  socket.io       ^4.8.0       WebSocket transport (server)
+#  socket.io-client ^4.8.0      WebSocket transport (client)
+#  zeromq          ^6.5.0       ZMQ bindings for Node.js
+#  vite            ^6.0.0       Dev server & bundler
+#  typescript      ^5.7.0       Type checking
+#  tailwindcss     ^3.4.19      Utility CSS framework
+
+
+# ────────────────────────────────────────────────────────────
+#  DOCKER (optional — recommended for deployment)
+# ────────────────────────────────────────────────────────────
+
+#  docker          >= 24.0      Container runtime
+#  docker-compose  >= 2.20      Multi-container orchestration
+#  ollama/ollama   latest       Local LLM server (Llama 3.1 8B)
