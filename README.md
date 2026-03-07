@@ -31,7 +31,7 @@ Docker Network
       Serves: :11434 via Ollama (local only, no cloud API)
 ```
 
-![Process Flow](docs/process_flow.png)
+![Process Flow](docs/process_flow.jpeg)
 
 ---
 
